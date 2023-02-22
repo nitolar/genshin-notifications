@@ -35,22 +35,23 @@ def resin():
                     toaster.show_toast("One of your resin milestone was reached", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 60)
                     resin_notification_send = True
         else: 
-            if notes['resin'] == notes['max_resin']:
-                print("Your resin is FULL")
-                if os.getenv('tts') == 'True':
-                    engine.say("Your resin is FULL")
-                    engine.runAndWait()
-                resin_last_count = notes['resin']
-                toaster.show_toast("Your resin is FULL", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 60)
-                resin_notification_send = True
-            elif notes['resin'] >= notes['max_resin']:
-                print("Your resin isn't just FULL")
-                if os.getenv('tts') == 'True':
-                    engine.say("Your resin isn't just FULL")
-                    engine.runAndWait()
-                resin_last_count = notes['resin']
-                toaster.show_toast("Your resin isn't just FULL", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 60)
-                resin_notification_send = True
+            if resin_notification_send == False:
+                if notes['resin'] == notes['max_resin']:
+                    print("Your resin is FULL")
+                    if os.getenv('tts') == 'True':
+                        engine.say("Your resin is FULL")
+                        engine.runAndWait()
+                    resin_last_count = notes['resin']
+                    toaster.show_toast("Your resin is FULL", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 10)
+                    resin_notification_send = True
+                elif notes['resin'] >= notes['max_resin']:
+                    print("Your resin isn't just FULL")
+                    if os.getenv('tts') == 'True':
+                        engine.say("Your resin isn't just FULL")
+                        engine.runAndWait()
+                    resin_last_count = notes['resin']
+                    toaster.show_toast("Your resin isn't just FULL", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 60)
+                    resin_notification_send = True
                 
         sleep(480)
     
@@ -76,14 +77,15 @@ def realm():
                     toaster.show_toast("One of your realm currency milestone was reached", f"You currently have {notes['realm_currency']} realm currency out of {notes['max_realm_currency']}", "ico/Realm.ico", 60)
                     realm_notification_send = True
         else: 
-            if notes['realm_currency'] == notes['max_realm_currency']:
-                print("Your realm currency is FULL")
-                if os.getenv('tts') == 'True':
-                    engine.say("Your realm currency is FULL")
-                    engine.runAndWait()
-                realm_last_count = notes['realm_currency']
-                toaster.show_toast("Your realm currency is FULL", f"You currently have {notes['realm_currency']} resin out of {notes['max_realm_currency']}", "ico/Realm.ico", 60)
-                realm_notification_send = True
+            if realm_notification_send == False:
+                if notes['realm_currency'] == notes['max_realm_currency']:
+                    print("Your realm currency is FULL")
+                    if os.getenv('tts') == 'True':
+                        engine.say("Your realm currency is FULL")
+                        engine.runAndWait()
+                    realm_last_count = notes['realm_currency']
+                    toaster.show_toast("Your realm currency is FULL", f"You currently have {notes['realm_currency']} resin out of {notes['max_realm_currency']}", "ico/Realm.ico", 60)
+                    realm_notification_send = True
                 
         sleep(300)
    
