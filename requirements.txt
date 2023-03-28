@@ -2,3 +2,4 @@ genshinstats @ git+https://github.com/nitolar/genshinstats
 python-dotenv
 win10toast
 pyttsx3
+pytz
