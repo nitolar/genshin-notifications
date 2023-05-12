@@ -10,7 +10,7 @@ Also automatically collects your daily check-in!
 
 ## Preview
 
-[gsnotification.webm](https://user-images.githubusercontent.com/73779998/220456288-f21d8e94-0f3d-42f1-8458-4d93b65078d6.webm)
+[gsnotification.webm](https://github.com/nitolar/genshin-notifications/assets/73779998/d8526fd8-5bf9-4940-87a3-67675ddaa13c)
 
 ## How to use
 
@@ -44,6 +44,10 @@ python notifications.py
 
 
 ## Changelog
+
+### 12.05.2023
+
+- Fixed video not loading in preview section in readme.md
 
 ### 28.03.2023
 
