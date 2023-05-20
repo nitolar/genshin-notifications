@@ -45,6 +45,12 @@ python notifications.py
 
 ## Changelog
 
+### 20.05.2023
+
+- Fixed spelling
+- Fixed a DataNotPublic error sometimes showing up if you used to play other games made by Hoyoverse on the same account
+- Changed full resin notification length from 10 seconds to 60 (as it should be)
+
 ### 12.05.2023
 
 - Fixed video not loading in preview section in readme.md

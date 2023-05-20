@@ -17,7 +17,17 @@ def resin():
     resin_notification_send = False
     resin_last_count = -1
     while (True):
-        notes = gs.get_notes(gs.get_game_accounts()[0]['uid'])
+        ac = gs.get_game_accounts()
+        get_account_pos = list(map(lambda x:x['biz']=='hk4e_global', ac))
+        z = 0
+        pos = 0
+        for i in get_account_pos:
+            if i == True:
+                pos = z
+            else:
+                z += 1
+        uid = ac[pos]['uid']
+        notes = gs.get_notes(uid)
         
         if resin_notification_send == True:
             if resin_last_count != notes['resin']:
@@ -42,7 +52,7 @@ def resin():
                             engine.say("Your resin is FULL")
                             engine.runAndWait()
                         resin_last_count = notes['resin']
-                        toaster.show_toast("Your resin is FULL", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 10)
+                        toaster.show_toast("Your resin is FULL", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 60)
                         resin_notification_send = True
                     elif notes['resin'] >= notes['max_resin']:
                         print(f"{strftime('%H:%M:%S', localtime())} | Your resin isn't just FULL")
@@ -60,7 +70,7 @@ def resin():
                         engine.say("Your resin is FULL")
                         engine.runAndWait()
                     resin_last_count = notes['resin']
-                    toaster.show_toast("Your resin is FULL", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 10)
+                    toaster.show_toast("Your resin is FULL", f"You currently have {notes['resin']} resin out of {notes['max_resin']}", "ico/Resin.ico", 60)
                     resin_notification_send = True
                 elif notes['resin'] >= notes['max_resin']:
                     print(f"{strftime('%H:%M:%S', localtime())} | Your resin isn't just FULL")
@@ -77,7 +87,17 @@ def realm():
     realm_notification_send = False
     realm_last_count = -1
     while (True):
-        notes = gs.get_notes(gs.get_game_accounts()[0]['uid'])
+        ac = gs.get_game_accounts()
+        get_account_pos = list(map(lambda x:x['biz']=='hk4e_global', ac))
+        z = 0
+        pos = 0
+        for i in get_account_pos:
+            if i == True:
+                pos = z
+            else:
+                z += 1
+        uid = ac[pos]['uid']
+        notes = gs.get_notes(uid)
         
         if realm_notification_send == True:
             if realm_last_count != notes['realm_currency']:
@@ -120,7 +140,17 @@ def realm():
 def transformer():
     parametric_notification_send = False
     while (True):
-        notes = gs.get_notes(gs.get_game_accounts()[0]['uid'])
+        ac = gs.get_game_accounts()
+        get_account_pos = list(map(lambda x:x['biz']=='hk4e_global', ac))
+        z = 0
+        pos = 0
+        for i in get_account_pos:
+            if i == True:
+                pos = z
+            else:
+                z += 1
+        uid = ac[pos]['uid']
+        notes = gs.get_notes(uid)
         
         if parametric_notification_send == True:
             if notes['parametric_transformer_cooldown_ended'] == False:
@@ -141,7 +171,17 @@ def expeditions():
     expeditions_notification_send = False
     expeditions_last_count = 0
     while (True):
-        notes = gs.get_notes(gs.get_game_accounts()[0]['uid'])
+        ac = gs.get_game_accounts()
+        get_account_pos = list(map(lambda x:x['biz']=='hk4e_global', ac))
+        z = 0
+        pos = 0
+        for i in get_account_pos:
+            if i == True:
+                pos = z
+            else:
+                z += 1
+        uid = ac[pos]['uid']
+        notes = gs.get_notes(uid)
         
         if expeditions_notification_send == True:
             if list(map(lambda x:x['status']=='Finished', notes['expeditions'])).count(True) != expeditions_last_count:
@@ -191,18 +231,19 @@ def daily():
         sleep(900)
         
 if __name__ == '__main__':
+    print("-----------------------------------")
     if (os.getenv('resin_not')) == 'True':
         p1 = Process(target=resin)
         p1.start()
-        print("Resin turnd on")
+        print("Resin turned on")
     if (os.getenv('realm_not')) == 'True':
         p2 = Process(target=realm)
         p2.start()
-        print("Realm currency turnd on")
+        print("Realm currency turned on")
     if (os.getenv('transformer_not')) == 'True':
         p3 = Process(target=transformer)
         p3.start()
-        print("Parametric Transformer turnd on")
+        print("Parametric Transformer turned on")
     if (os.getenv('expeditions_not')) == 'True':
         p4 = Process(target=expeditions)
         p4.start()
