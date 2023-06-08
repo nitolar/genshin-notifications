@@ -8,6 +8,8 @@ Brings resin, realm currency, parametric transformer and expedition notification
 
 Also automatically collects your daily check-in!
 
+[Check out Honkia: Star Rail version](https://github.com/nitolar/hsr-notifications)
+
 ## Preview
 
 [gsnotification.webm](https://github.com/nitolar/genshin-notifications/assets/73779998/d8526fd8-5bf9-4940-87a3-67675ddaa13c)
