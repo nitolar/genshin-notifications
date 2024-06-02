@@ -3,3 +3,4 @@ python-dotenv
 win10toast
 pyttsx3
 pytz
+psutil

@@ -47,6 +47,13 @@ python notifications.py
 
 ## Changelog
 
+### 02.06.2024
+
+**After this update you must reinstall requirements.txt! Or install psutil using: pip install psutil**
+- Added Shop and Abyss reset notification
+- Added reminders when you turn on genshin
+- Added errors when incorrect values are set for `set_cookies_method` (not set to `auto` or `login`), `ltuid` (set to deafult 0), `ltoken` (empty), `server` (not set to one of those `eu`, `us`, `as`)
+
 ### 20.05.2023
 
 - Fixed spelling
