@@ -1,4 +1,4 @@
-genshinstats @ git+https://github.com/nitolar/genshinstats
+genshin @ git+https://github.com/thesadru/genshin.py
 python-dotenv
 win10toast
 pyttsx3

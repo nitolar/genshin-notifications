@@ -47,6 +47,15 @@ python notifications.py
 
 ## Changelog
 
+### 21.09.2024
+
+**After this update you must reinstall requirements.txt! Or install genshin.py using: pip install git+https://github.com/thesadru/genshin.py**
+- Rewrite an entire project to use `genshin.py` instead of `genshinstats`
+- Added Imaginarium Theater reset notification
+- Added 160 resin to `resin_milestones`
+- Fixed Spiral Abyss reset notification being sent even though it wasn't reset
+- Spiral Abyss and Shop reset notifications now have a separate function
+
 ### 02.06.2024
 
 **After this update you must reinstall requirements.txt! Or install psutil using: pip install psutil**
@@ -84,7 +93,7 @@ python notifications.py
 
 ## Thanks to
 
-[thesadru](https://github.com/thesadru) for creating original [genshinstats](https://github.com/thesadru/genshinstats). [(My fork of genshinstats that is used in this project)](https://github.com/nitolar/genshinstats)
+[thesadru](https://github.com/thesadru) for creating [genshin.py](https://github.com/thesadru/genshin.py).
 
 
 ## Feedback
