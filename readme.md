@@ -47,6 +47,10 @@ python notifications.py
 
 ## Changelog
 
+### 22.09.2024
+
+- Fixed Shop reminder not working
+
 ### 21.09.2024
 
 **After this update you must reinstall requirements.txt! Or install genshin.py using: pip install git+https://github.com/thesadru/genshin.py**

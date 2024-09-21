@@ -391,7 +391,7 @@ async def reminder():
                 timezones = {"eu": "Etc/GMT-1", "as": "Etc/GMT-8", "us": "Etc/GMT+5"}
                 day = datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d')
                 if (os.getenv("reminder_shop")) == 'True':
-                    if day == "1":
+                    if day == "01":
                         print(f"REMINDER {strftime('%H:%M:%S', localtime())} | Shop has been reset today")
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Shop has been reset today")
