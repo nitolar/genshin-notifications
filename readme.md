@@ -50,6 +50,7 @@ python notifications.py
 ### 22.09.2024
 
 - Fixed Shop reminder not working
+- Changed the length of Abyss and Theater reminders to 5 seconds from 60 (as it should be)
 
 ### 21.09.2024
 

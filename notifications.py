@@ -378,7 +378,7 @@ async def reminder():
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Abyss has been reset")
                             engine.runAndWait()
-                        await to_thread(toaster.show_toast, "Abyss reset", f"Abyss has been reset", "ico/Abyss.ico", 60)
+                        await to_thread(toaster.show_toast, "Abyss reset", f"Abyss has been reset", "ico/Abyss.ico", 5)
                 
                 if (os.getenv("reminder_theater")) == 'True':
                     if theater_reset:
@@ -386,7 +386,7 @@ async def reminder():
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Imaginarium Theater has been reset")
                             engine.runAndWait()
-                        await to_thread(toaster.show_toast, "Imaginarium Theater reset", f"Imaginarium Theater has been reset", "ico/Theater.ico", 60)
+                        await to_thread(toaster.show_toast, "Imaginarium Theater reset", f"Imaginarium Theater has been reset", "ico/Theater.ico", 5)
                 
                 timezones = {"eu": "Etc/GMT-1", "as": "Etc/GMT-8", "us": "Etc/GMT+5"}
                 day = datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d')
