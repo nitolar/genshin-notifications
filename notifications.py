@@ -1,9 +1,10 @@
 import dotenv, os, pyttsx3, pytz, datetime, psutil, genshin, asyncio, json, contextvars, functools
-from win10toast import ToastNotifier
+from win11toast import toast_async
 from time import localtime, strftime
 
-dotenv.load_dotenv(dotenv_path="settings.env")
-toaster = ToastNotifier()
+gn_path = os.path.dirname(os.path.realpath(__file__))
+toast_async = functools.partial(toast_async, app_id="Genshin Notifications", on_click=lambda args: None, on_dismissed=lambda args: None, on_failed=lambda args: None)
+dotenv.load_dotenv(dotenv_path=f"{gn_path}/settings.env")
 engine = pyttsx3.init()
 os.system("") # To make colors in errors always work
 gs = genshin.Client()
@@ -34,6 +35,12 @@ if os.getenv("server") not in ["eu", "us", "as"]:
     print("\33[31mIncorrect value for \"server\"! \n\33[93mSet it to on of this values: \"eu\", \"us\", \"as\"\033[0m")
     exit()
 
+def margin(input, margin, milestone):
+    return any(int(x) <= input <= int(x) + margin for x in milestone)
+
+def closest(input, milestone):
+    return min(milestone, key=lambda x: abs(int(x) - input))
+
 async def to_thread(func, /, *args, **kwargs):
     loop = asyncio.get_running_loop()
     ctx = contextvars.copy_context()
@@ -43,6 +50,11 @@ async def to_thread(func, /, *args, **kwargs):
 async def resin():
     resin_notification_send = False
     resin_last_count = -1
+    resin_milestone_stop_notifications_until = -1
+    icon = {
+        'src': f'file://{gn_path}/ico/Resin.ico',
+        'placement': 'appLogoOverride'
+    }
     while (True):
         ac = await gs.get_game_accounts()
         uid = 0
@@ -54,18 +66,24 @@ async def resin():
         if resin_notification_send == True:
             if resin_last_count != notes.current_resin:
                 resin_notification_send = False
+                if (os.getenv('resin_milestone')) == 'True':
+                    if notes.current_resin <= resin_milestone_stop_notifications_until:
+                        resin_notification_send = True
+                    else:
+                        resin_milestone_stop_notifications_until = -1
 
         if (os.getenv('resin_milestone')) == 'True':
             resin_milestones = os.getenv('resin_milestones').split(', ')
-            if notes.current_resin in resin_milestones:
+            if margin(notes.current_resin, int(os.getenv("resin_milestones_margin")), resin_milestones):
                 if resin_notification_send == False:
                     print(f"{strftime('%H:%M:%S', localtime())} | One of your resin milestone was reached")
                     if os.getenv('tts') == 'True':
                         engine.say("One of your resin milestone was reached")
                         engine.runAndWait()
                     resin_last_count = notes.current_resin
-                    await to_thread(toaster.show_toast, "One of your resin milestone was reached", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", "ico/Resin.ico", 60)
+                    await toast_async("One of your resin milestone was reached", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", icon=icon)
                     resin_notification_send = True
+                    resin_milestone_stop_notifications_until = int(closest(notes.current_resin, resin_milestones)) + int(os.getenv("resin_milestones_margin"))
             else:
                 if resin_notification_send == False:
                     if notes.current_resin == notes.max_resin:
@@ -74,7 +92,7 @@ async def resin():
                             engine.say("Your resin is FULL")
                             engine.runAndWait()
                         resin_last_count = notes.current_resin
-                        await to_thread(toaster.show_toast, "Your resin is FULL", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", "ico/Resin.ico", 60)
+                        await toast_async("Your resin is FULL", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", icon=icon)
                         resin_notification_send = True
                     elif notes.current_resin >= notes.max_resin:
                         print(f"{strftime('%H:%M:%S', localtime())} | Your resin isn't just FULL")
@@ -82,7 +100,7 @@ async def resin():
                             engine.say("Your resin isn't just FULL")
                             engine.runAndWait()
                         resin_last_count = notes.current_resin
-                        await to_thread(toaster.show_toast, "Your resin isn't just FULL", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", "ico/Resin.ico", 60)
+                        await toast_async("Your resin isn't just FULL", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", icon=icon)
                         resin_notification_send = True    
         else: 
             if resin_notification_send == False:
@@ -92,7 +110,7 @@ async def resin():
                         engine.say("Your resin is FULL")
                         engine.runAndWait()
                     resin_last_count = notes.current_resin
-                    await to_thread(toaster.show_toast, "Your resin is FULL", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", "ico/Resin.ico", 60)
+                    await toast_async("Your resin is FULL", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", icon=icon)
                     resin_notification_send = True
                 elif notes.current_resin >= notes.max_resin:
                     print(f"{strftime('%H:%M:%S', localtime())} | Your resin isn't just FULL")
@@ -100,7 +118,7 @@ async def resin():
                         engine.say("Your resin isn't just FULL")
                         engine.runAndWait()
                     resin_last_count = notes.current_resin
-                    await to_thread(toaster.show_toast, "Your resin isn't just FULL", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", "ico/Resin.ico", 60)
+                    await toast_async("Your resin isn't just FULL", f"You currently have {notes.current_resin} resin out of {notes.max_resin}", icon=icon)
                     resin_notification_send = True
 
         await asyncio.sleep(480)
@@ -108,6 +126,11 @@ async def resin():
 async def realm():
     realm_notification_send = False
     realm_last_count = -1
+    realm_milestone_stop_notifications_until = -1
+    icon = {
+        'src': f'file://{gn_path}/ico/Realm.ico',
+        'placement': 'appLogoOverride'
+    }
     while (True):
         ac = await gs.get_game_accounts()
         uid = 0
@@ -119,18 +142,24 @@ async def realm():
         if realm_notification_send == True:
             if realm_last_count != notes.current_realm_currency:
                 realm_notification_send = False
+                if (os.getenv('realm_milestone')) == 'True':
+                    if notes.current_resin <= realm_milestone_stop_notifications_until:
+                        realm_notification_send = True
+                    else:
+                        realm_milestone_stop_notifications_until = -1
 
         if (os.getenv('realm_milestone')) == 'True':
             realm_milestones = os.getenv('realm_milestones').split(', ')
-            if notes.current_realm_currency in realm_milestones:
+            if margin(notes.current_realm_currency, int(os.getenv("realm_milestones_margin")), realm_milestones):
                 if realm_notification_send == False:
                     print(f"{strftime('%H:%M:%S', localtime())} | One of your realm currency milestone was reached")
                     if os.getenv('tts') == 'True':
                         engine.say("One of your realm currency milestone was reached")
                         engine.runAndWait()
                     realm_last_count = notes.current_realm_currency
-                    await to_thread(toaster.show_toast, "One of your realm currency milestone was reached", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", "ico/Realm.ico", 60)
+                    await toast_async("One of your realm currency milestone was reached", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", icon=icon)
                     realm_notification_send = True
+                    realm_milestone_stop_notifications_until = int(closest(notes.current_resin, realm_milestones)) + int(os.getenv("realm_milestones_margin"))
             else:
                 if realm_notification_send == False:
                     if notes.current_realm_currency == notes.max_realm_currency:
@@ -139,7 +168,7 @@ async def realm():
                             engine.say("Your realm currency is FULL")
                             engine.runAndWait()
                         realm_last_count = notes.current_realm_currency
-                        await to_thread(toaster.show_toast, "Your realm currency is FULL", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", "ico/Realm.ico", 60)
+                        await toast_async("Your realm currency is FULL", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", icon=icon)
                         realm_notification_send = True
         else: 
             if realm_notification_send == False:
@@ -149,13 +178,17 @@ async def realm():
                         engine.say("Your realm currency is FULL")
                         engine.runAndWait()
                     realm_last_count = notes.current_realm_currency
-                    await to_thread(toaster.show_toast, "Your realm currency is FULL", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", "ico/Realm.ico", 60)
+                    await toast_async("Your realm currency is FULL", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", icon=icon)
                     realm_notification_send = True
 
         await asyncio.sleep(300)
 
 async def transformer():
     parametric_notification_send = False
+    icon = {
+        'src': f'file://{gn_path}/ico/Transformer.ico',
+        'placement': 'appLogoOverride'
+    }
     while (True):
         ac = await gs.get_game_accounts()
         uid = 0
@@ -174,7 +207,7 @@ async def transformer():
                 if os.getenv('tts') == 'True':
                     engine.say("Parametric Transformer cooldown has ended")
                     engine.runAndWait()
-                await to_thread(toaster.show_toast, "Parametric Transformer cooldown has ended", f"Parametric Transformer cooldown has ended", "ico/Transformer.ico", 60)
+                await toast_async("Parametric Transformer cooldown has ended", f"Parametric Transformer cooldown has ended", icon=icon)
                 parametric_notification_send = True
 
         await asyncio.sleep(600)
@@ -182,6 +215,10 @@ async def transformer():
 async def expeditions():
     expeditions_notification_send = False
     expeditions_last_count = 0
+    icon = {
+        'src': f'file://{gn_path}/ico/Expedition.ico',
+        'placement': 'appLogoOverride'
+    }
     while (True):
         ac = await gs.get_game_accounts()
         uid = 0
@@ -206,7 +243,7 @@ async def expeditions():
                     engine.say("All your expeditions have completed")
                     engine.runAndWait()
                 expeditions_last_count = completed
-                await to_thread(toaster.show_toast, "All your expeditions have completed", f"{expeditions_last_count} expeditions have completed out of {notes.max_expeditions}", "ico/Expedition.ico", 60)
+                await toast_async("All your expeditions have completed", f"{expeditions_last_count} expeditions have completed out of {notes.max_expeditions}", icon=icon)
                 expeditions_notification_send = True
             elif completed > expeditions_last_count:
                 print(f"{strftime('%H:%M:%S', localtime())} | Some of your expeditions have completed")
@@ -214,7 +251,7 @@ async def expeditions():
                     engine.say("Some of your expeditions have completed")
                     engine.runAndWait()
                 expeditions_last_count = completed
-                await to_thread(toaster.show_toast, "Some of your expeditions have completed", f"{expeditions_last_count} expeditions have completed out of {notes.max_expeditions}", "ico/Expedition.ico", 60)
+                await toast_async("Some of your expeditions have completed", f"{expeditions_last_count} expeditions have completed out of {notes.max_expeditions}", icon=icon)
                 expeditions_notification_send = True
 
         await asyncio.sleep(600)
@@ -222,6 +259,10 @@ async def expeditions():
 async def daily():
     daily_last_day = -1
     timezone = pytz.timezone('Etc/GMT-8')
+    icon = {
+        'src': f'file://{gn_path}/ico/Daily.ico',
+        'placement': 'appLogoOverride'
+    }
     while (True):
         day = datetime.datetime.now(timezone).strftime('%d')
 
@@ -237,7 +278,7 @@ async def daily():
                     engine.runAndWait()
                 daily_last_day = day
                 if os.getenv('daily_not') == 'True':
-                    await to_thread(toaster.show_toast, "Collected your daily check-in reward", f"Claimed daily reward - {reward.amount}x {reward.name}", "ico/Daily.ico", 60)
+                    await toast_async("Collected your daily check-in reward", f"Claimed daily reward - {reward.amount}x {reward.name}", icon=icon)
 
         await asyncio.sleep(900)
 
@@ -245,6 +286,10 @@ abyss_reset = False
 
 async def abyss():
     global abyss_reset
+    icon = {
+        'src': f'file://{gn_path}/ico/Abyss.ico',
+        'placement': 'appLogoOverride'
+    }
     while(True):    
         ac = await gs.get_game_accounts()
         uid = 0
@@ -268,7 +313,7 @@ async def abyss():
             if os.getenv('tts') == 'True':
                 engine.say("Abyss has been reset")
                 engine.runAndWait()
-            await to_thread(toaster.show_toast, "Abyss reset", f"Abyss has been reset", "ico/Abyss.ico", 60)
+            await toast_async("Abyss reset", f"Abyss has been reset", icon=icon)
                     
         await asyncio.sleep(900)
 
@@ -276,6 +321,10 @@ theater_reset = False
  
 async def theater():
     global theater_reset
+    icon = {
+        'src': f'file://{gn_path}/ico/Theater.ico',
+        'placement': 'appLogoOverride'
+    }
     while(True):    
         ac = await gs.get_game_accounts()
         uid = 0
@@ -299,24 +348,28 @@ async def theater():
             if os.getenv('tts') == 'True':
                 engine.say("Imaginarium Theater has been reset")
                 engine.runAndWait()
-            await to_thread(toaster.show_toast, "Imaginarium Theater reset", f"Imaginarium Theater has been reset", "ico/Theater.ico", 60)
+            await toast_async("Imaginarium Theater reset", f"Imaginarium Theater has been reset", icon=icon)
                     
         await asyncio.sleep(900)
 
 async def shop():
     timezones = {"eu": "Etc/GMT-1", "as": "Etc/GMT-8", "us": "Etc/GMT+5"}
     last_day = -1
+    icon = {
+        'src': f'file://{gn_path}/ico/Shop.ico',
+        'placement': 'appLogoOverride'
+    }
     while(True):
-        day = datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d')
+        day = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d'))
 
         if last_day != day:
             last_day = day
-            if day == "01":
+            if day == 1:
                 print(f"{strftime('%H:%M:%S', localtime())} | Shop has been reset today")
                 if os.getenv('tts') == 'True':
                     engine.say("Shop has been reset today")
                     engine.runAndWait()
-                await to_thread(toaster.show_toast, "Shop reset", f"Shop has been reset today", "ico/Shop.ico", 60)
+                await toast_async("Shop reset", f"Shop has been reset today", icon=icon)
 
         await asyncio.sleep(900)
 
@@ -324,6 +377,26 @@ async def reminder():
     game_on = False
     global abyss_reset
     global theater_reset
+    icon_t = {
+        'src': f'file://{gn_path}/ico/Transformer.ico',
+        'placement': 'appLogoOverride'
+    }
+    icon_r = {
+        'src': f'file://{gn_path}/ico/Realm.ico',
+        'placement': 'appLogoOverride'
+    }
+    icon_a = {
+        'src': f'file://{gn_path}/ico/Abyss.ico',
+        'placement': 'appLogoOverride'
+    }
+    icon_it = {
+        'src': f'file://{gn_path}/ico/Theater.ico',
+        'placement': 'appLogoOverride'
+    }
+    icon_s = {
+        'src': f'file://{gn_path}/ico/Shop.ico',
+        'placement': 'appLogoOverride'
+    }
     while(True):
         name = "genshinimpact.exe" # "notepad++.exe"
         if name in (p.name().lower() for p in psutil.process_iter()):
@@ -346,31 +419,31 @@ async def reminder():
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Parametric Transformer cooldown has ended")
                             engine.runAndWait()
-                        await to_thread(toaster.show_toast, "Parametric Transformer cooldown has ended", f"Parametric Transformer cooldown has ended", "ico/Transformer.ico", 5)
+                        await toast_async("Parametric Transformer cooldown has ended", f"Parametric Transformer cooldown has ended", icon=icon_t)
 
                 if (os.getenv("reminder_realm")) == 'True':
                     if (os.getenv('realm_milestone')) == 'True':
                         realm_milestones = os.getenv('realm_milestones').split(', ')
-                        if notes.current_realm_currency in realm_milestones:
+                        if margin(notes.current_realm_currency, int(os.getenv("realm_milestones_margin")), realm_milestones):
                             print(f"REMINDER {strftime('%H:%M:%S', localtime())} | One of your realm currency milestone was reached")
                             if os.getenv('tts') == 'True':
                                 engine.say("REMINDER One of your realm currency milestone was reached")
                                 engine.runAndWait()
-                            await to_thread(toaster.show_toast, "One of your realm currency milestone was reached", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", "ico/Realm.ico", 5)
+                            await toast_async("One of your realm currency milestone was reached", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", icon=icon_r)
                         else:
                             if notes.current_realm_currency == notes.max_realm_currency:
                                 print(f"REMINDER {strftime('%H:%M:%S', localtime())} | Your realm currency is FULL")
                                 if os.getenv('tts') == 'True':
                                     engine.say("REMINDER Your realm currency is FULL")
                                     engine.runAndWait()
-                                await to_thread(toaster.show_toast, "Your realm currency is FULL", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", "ico/Realm.ico", 5)
+                                await toast_async("Your realm currency is FULL", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", icon=icon_r)
                     else: 
                         if notes.current_realm_currency == notes.max_realm_currency:
                             print(f"REMINDER {strftime('%H:%M:%S', localtime())} | Your realm currency is FULL")
                             if os.getenv('tts') == 'True':
                                 engine.say("REMINDER Your realm currency is FULL")
                                 engine.runAndWait()
-                            await to_thread(toaster.show_toast, "Your realm currency is FULL", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", "ico/Realm.ico", 5)
+                            await toast_async("Your realm currency is FULL", f"You currently have {notes.current_realm_currency} realm currency out of {notes.max_realm_currency}", icon=icon_r)
 
                 if (os.getenv("reminder_abyss")) == 'True':
                     if abyss_reset:
@@ -378,7 +451,7 @@ async def reminder():
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Abyss has been reset")
                             engine.runAndWait()
-                        await to_thread(toaster.show_toast, "Abyss reset", f"Abyss has been reset", "ico/Abyss.ico", 5)
+                        await toast_async("Abyss reset", f"Abyss has been reset", icon=icon_a)
                 
                 if (os.getenv("reminder_theater")) == 'True':
                     if theater_reset:
@@ -386,17 +459,17 @@ async def reminder():
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Imaginarium Theater has been reset")
                             engine.runAndWait()
-                        await to_thread(toaster.show_toast, "Imaginarium Theater reset", f"Imaginarium Theater has been reset", "ico/Theater.ico", 5)
+                        await toast_async("Imaginarium Theater reset", f"Imaginarium Theater has been reset", icon=icon_it)
                 
                 timezones = {"eu": "Etc/GMT-1", "as": "Etc/GMT-8", "us": "Etc/GMT+5"}
-                day = datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d')
+                day = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d'))
                 if (os.getenv("reminder_shop")) == 'True':
-                    if day == "01":
+                    if day == 1:
                         print(f"REMINDER {strftime('%H:%M:%S', localtime())} | Shop has been reset today")
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Shop has been reset today")
                             engine.runAndWait()
-                        await to_thread(toaster.show_toast, "Shop reset", f"Shop has been reset today", "ico/Shop.ico", 5)
+                        await toast_async("Shop reset", f"Shop has been reset today", icon=icon_s)
         else:
             if game_on == True:
                 game_on = False

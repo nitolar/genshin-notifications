@@ -47,6 +47,14 @@ python notifications.py
 
 ## Changelog
 
+### 17.10.2024
+
+**After this update you must reinstall requirements.txt! Or install win11toast using: pip install win11toast**
+- Rewrote an entire project to use `win11toast` instead of `win10toast`
+- Added `resin_milestones_margin` and `realm_milestones_margin`, more information in `settings.env`
+- Changed the default values of `realm_milestones`
+- Changed all `.ico` files in `/ico` to have the same width and height
+
 ### 22.09.2024
 
 - Fixed Shop reminder not working
@@ -55,7 +63,7 @@ python notifications.py
 ### 21.09.2024
 
 **After this update you must reinstall requirements.txt! Or install genshin.py using: pip install git+https://github.com/thesadru/genshin.py**
-- Rewrite an entire project to use `genshin.py` instead of `genshinstats`
+- Rewrote an entire project to use `genshin.py` instead of `genshinstats`
 - Added Imaginarium Theater reset notification
 - Added 160 resin to `resin_milestones`
 - Fixed Spiral Abyss reset notification being sent even though it wasn't reset

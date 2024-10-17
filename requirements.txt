@@ -1,6 +1,6 @@
 genshin @ git+https://github.com/thesadru/genshin.py
 python-dotenv
-win10toast
+win11toast
 pyttsx3
 pytz
 psutil
