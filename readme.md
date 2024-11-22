@@ -47,6 +47,11 @@ python notifications.py
 
 ## Changelog
 
+### 23.11.2024
+
+- Added detection of the `GeetestError` error when checking if Spiral Abyss/Imaginarium Theater reset, and added a notification when it happens  
+- Made Spiral Abyss/Imaginarium Theater reset checks occur only once per Genshin server reboot to prevent `GeetestError` from occurring in the first place
+
 ### 17.10.2024
 
 **After this update you must reinstall requirements.txt! Or install win11toast using: pip install win11toast**

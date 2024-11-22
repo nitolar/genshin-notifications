@@ -5,9 +5,10 @@ from time import localtime, strftime
 gn_path = os.path.dirname(os.path.realpath(__file__))
 toast_async = functools.partial(toast_async, app_id="Genshin Notifications", on_click=lambda args: None, on_dismissed=lambda args: None, on_failed=lambda args: None)
 dotenv.load_dotenv(dotenv_path=f"{gn_path}/settings.env")
+gs = genshin.Client()
 engine = pyttsx3.init()
 os.system("") # To make colors in errors always work
-gs = genshin.Client()
+timezones = {"eu": "Etc/GMT-1", "as": "Etc/GMT-8", "us": "Etc/GMT+5"}
 
 if os.path.exists("cache.json"):
     pass
@@ -285,75 +286,108 @@ async def daily():
 abyss_reset = False
 
 async def abyss():
+    last_day = -1
+    started_between_0_3 = False
     global abyss_reset
     icon = {
         'src': f'file://{gn_path}/ico/Abyss.ico',
         'placement': 'appLogoOverride'
     }
     while(True):    
-        ac = await gs.get_game_accounts()
-        uid = 0
-        for account in ac:
-            if genshin.Game.GENSHIN in account.game_biz:
-                uid = account.uid
-        abyss = await gs.get_genshin_spiral_abyss(uid)
-        
-        with open("cache.json", "r", encoding='utf-8') as cache_f:
-            cache = json.load(cache_f)
-            season = cache['abyss_season']
-            cache_f.close()
+        day = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d'))
+        hour = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%H'))
+        exe = True if hour >= 4 else False
+        if (last_day != day and exe) or (not exe and not started_between_0_3 and day != last_day + 1):
+            started_between_0_3 = not started_between_0_3
+            last_day = day
 
-        if season != abyss.season:
-            with open("cache.json", "w", encoding='utf-8') as cache_f:
-                abyss_reset = True
-                cache['abyss_season'] = abyss.season
-                json.dump(cache, cache_f, indent=4)
+            ac = await gs.get_game_accounts()
+            uid = 0
+            for account in ac:
+                if genshin.Game.GENSHIN in account.game_biz:
+                    uid = account.uid
+            try:
+                abyss = await gs.get_genshin_spiral_abyss(uid)
+            except genshin.GeetestError as ex:
+                print(f"\33[31mERROR | Captcha triggered while fetching Spiral Abyss data. Go to your Battle Chronicle and complete a captcha for the script to be able to notify you when Spiral Abyss resets!\033[0m")
+                if os.getenv('tts') == 'True':
+                    engine.say("Spiral Abyss reset data can't be collected! More information about the error is available in the console.")
+                    engine.runAndWait()
+                await toast_async("Spiral Abyss Error", f"Spiral Abyss reset data can't be collected!\nMore information about the error is available in the console.", icon=icon)
+                return
+
+            with open("cache.json", "r", encoding='utf-8') as cache_f:
+                cache = json.load(cache_f)
+                season = cache['abyss_season']
                 cache_f.close()
-            print(f"{strftime('%H:%M:%S', localtime())} | Abyss has been reset")
-            if os.getenv('tts') == 'True':
-                engine.say("Abyss has been reset")
-                engine.runAndWait()
-            await toast_async("Abyss reset", f"Abyss has been reset", icon=icon)
-                    
+
+            if season != abyss.season:
+                with open("cache.json", "w", encoding='utf-8') as cache_f:
+                    abyss_reset = True
+                    cache['abyss_season'] = abyss.season
+                    json.dump(cache, cache_f, indent=4)
+                    cache_f.close()
+                print(f"{strftime('%H:%M:%S', localtime())} | Abyss has been reset")
+                if os.getenv('tts') == 'True':
+                    engine.say("Abyss has been reset")
+                    engine.runAndWait()
+                await toast_async("Abyss reset", f"Abyss has been reset", icon=icon)
+
         await asyncio.sleep(900)
 
 theater_reset = False
  
 async def theater():
+    last_day = -1
+    started_between_0_3 = False
     global theater_reset
     icon = {
         'src': f'file://{gn_path}/ico/Theater.ico',
         'placement': 'appLogoOverride'
     }
     while(True):    
-        ac = await gs.get_game_accounts()
-        uid = 0
-        for account in ac:
-            if genshin.Game.GENSHIN in account.game_biz:
-                uid = account.uid
-        theater = await gs.get_imaginarium_theater(uid)
-        
-        with open("cache.json", "r", encoding='utf-8') as cache_f:
-            cache = json.load(cache_f)
-            season = cache['theater_season']
-            cache_f.close()
+        day = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d'))
+        hour = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%H'))
+        exe = True if hour >= 4 else False
+        if (last_day != day and exe) or (not exe and not started_between_0_3 and day != last_day + 1):
+            started_between_0_3 = not started_between_0_3
+            last_day = day 
 
-        if season != theater.datas[0].schedule.id:
-            with open("cache.json", "w", encoding='utf-8') as cache_f:
-                theater_reset = True
-                cache['theater_season'] = theater.datas[0].schedule.id
-                json.dump(cache, cache_f, indent=4)
+            ac = await gs.get_game_accounts()
+            uid = 0
+            for account in ac:
+                if genshin.Game.GENSHIN in account.game_biz:
+                    uid = account.uid
+            try:
+                theater = await gs.get_imaginarium_theater(uid)
+            except genshin.GeetestError as ex:
+                print(f"\33[31mERROR | Captcha triggered while fetching Imaginarium Theater data. Go to your Battle Chronicle and complete a captcha for the script to be able to notify you when Imaginarium Theater resets!\033[0m")
+                if os.getenv('tts') == 'True':
+                    engine.say("Imaginarium Theater reset data can't be collected! More information about the error is available in the console.")
+                    engine.runAndWait()
+                await toast_async("Imaginarium Theater Error", f"Imaginarium Theater reset data can't be collected!\nMore information about the error is available in the console.", icon=icon)
+                return
+
+            with open("cache.json", "r", encoding='utf-8') as cache_f:
+                cache = json.load(cache_f)
+                season = cache['theater_season']
                 cache_f.close()
-            print(f"{strftime('%H:%M:%S', localtime())} | Imaginarium Theater has been reset")
-            if os.getenv('tts') == 'True':
-                engine.say("Imaginarium Theater has been reset")
-                engine.runAndWait()
-            await toast_async("Imaginarium Theater reset", f"Imaginarium Theater has been reset", icon=icon)
-                    
+
+            if season != theater.datas[0].schedule.id:
+                with open("cache.json", "w", encoding='utf-8') as cache_f:
+                    theater_reset = True
+                    cache['theater_season'] = theater.datas[0].schedule.id
+                    json.dump(cache, cache_f, indent=4)
+                    cache_f.close()
+                print(f"{strftime('%H:%M:%S', localtime())} | Imaginarium Theater has been reset")
+                if os.getenv('tts') == 'True':
+                    engine.say("Imaginarium Theater has been reset")
+                    engine.runAndWait()
+                await toast_async("Imaginarium Theater reset", f"Imaginarium Theater has been reset", icon=icon)
+
         await asyncio.sleep(900)
 
 async def shop():
-    timezones = {"eu": "Etc/GMT-1", "as": "Etc/GMT-8", "us": "Etc/GMT+5"}
     last_day = -1
     icon = {
         'src': f'file://{gn_path}/ico/Shop.ico',
@@ -461,7 +495,6 @@ async def reminder():
                             engine.runAndWait()
                         await toast_async("Imaginarium Theater reset", f"Imaginarium Theater has been reset", icon=icon_it)
                 
-                timezones = {"eu": "Etc/GMT-1", "as": "Etc/GMT-8", "us": "Etc/GMT+5"}
                 day = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d'))
                 if (os.getenv("reminder_shop")) == 'True':
                     if day == 1:
