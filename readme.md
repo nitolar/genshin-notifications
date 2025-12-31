@@ -47,6 +47,13 @@ python notifications.py
 
 ## Changelog
 
+### 31.12.2025
+
+- Added Stygian Onslaught reset notification
+- Added support for v2 cookies
+- Added auto clearing of old notifications on start up to stop them from piling up in notification center
+- Updated Parametric Transformer cooldown checker to be more accurate with when cooldown ends 
+
 ### 23.11.2024
 
 - Added detection of the `GeetestError` error when checking if Spiral Abyss/Imaginarium Theater reset, and added a notification when it happens  

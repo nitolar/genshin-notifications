@@ -1,5 +1,5 @@
 import dotenv, os, pyttsx3, pytz, datetime, psutil, genshin, asyncio, json, contextvars, functools
-from win11toast import toast_async
+from win11toast import toast_async, clear_toast
 from time import localtime, strftime
 
 gn_path = os.path.dirname(os.path.realpath(__file__))
@@ -11,12 +11,24 @@ os.system("") # To make colors in errors always work
 timezones = {"eu": "Etc/GMT-1", "as": "Etc/GMT-8", "us": "Etc/GMT+5"}
 
 if os.path.exists("cache.json"):
-    pass
+    with open("cache.json", "r", encoding='utf-8') as cache_f:
+        data = json.load(cache_f)
+        if 'abyss_season' not in data:
+            data['abyss_season'] = 0
+        if 'theater_season' not in data:
+            data['theater_season'] = 0
+        if 'stygian_season' not in data:
+            data['stygian_season'] = 0
+        cache_f.close()
+    with open("cache.json", "w", encoding='utf-8') as cache_f:
+        json.dump(data, cache_f, indent=4)
+        cache_f.close()
 else: 
     with open("cache.json", "w", encoding='utf-8') as cache_f:
         data = {
             'abyss_season': 0,
-            'theater_season': 0
+            'theater_season': 0,
+            'stygian_season': 0
         }
         json.dump(data, cache_f, indent=4)
 
@@ -27,7 +39,11 @@ elif os.getenv('set_cookies_method') == 'login':
         print("\33[31mIncorrect ltuid or ltoken empty!\033[0m")
         exit()
     else:
-        gs.set_cookies(ltuid=int(os.getenv('ltuid')), ltoken=os.getenv('ltoken'))
+        if os.getenv('v2') == 'True':
+            gs.set_cookies(ltuid_v2=int(os.getenv('ltuid')), ltoken_v2=os.getenv('ltoken'))
+        else:
+            gs.set_cookies(ltuid=int(os.getenv('ltuid')), ltoken=os.getenv('ltoken'))
+            
 else:
     print("\33[31mIncorrect value for \"set_cookies_method\"! \n\33[93mSet it to: \"login\" or \"auto\"\033[0m")
     exit()
@@ -196,13 +212,13 @@ async def transformer():
         for account in ac:
             if genshin.Game.GENSHIN in account.game_biz:
                 uid = account.uid
-        notes = await gs.get_genshin_notes(uid)
+        notes_raw = await gs.get_genshin_notes(uid, return_raw_data=True)
 
         if parametric_notification_send == True:
-            if notes.transformer_recovery_time != datetime.datetime.now().astimezone():
+            if notes_raw["transformer"]["recovery_time"]["reached"] == False:
                 parametric_notification_send = False
 
-        if notes.transformer_recovery_time == datetime.datetime.now().astimezone():
+        if notes_raw["transformer"]["recovery_time"]["reached"] == True:
             if parametric_notification_send == False:
                 print(f"{strftime('%H:%M:%S', localtime())} | Parametric Transformer cooldown has ended")
                 if os.getenv('tts') == 'True':
@@ -387,6 +403,58 @@ async def theater():
 
         await asyncio.sleep(900)
 
+stygian_reset = False
+ 
+async def stygian():
+    last_day = -1
+    started_between_0_3 = False
+    global stygian_reset
+    icon = {
+        'src': f'file://{gn_path}/ico/Stygian.ico',
+        'placement': 'appLogoOverride'
+    }
+    while(True):  
+        day = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d'))
+        hour = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%H'))
+        exe = True if hour >= 4 else False
+        if (last_day != day and exe) or (not exe and not started_between_0_3 and day != last_day + 1):
+            started_between_0_3 = not started_between_0_3
+            last_day = day 
+
+            ac = await gs.get_game_accounts()
+            uid = 0
+            for account in ac:
+                if genshin.Game.GENSHIN in account.game_biz:
+                    uid = account.uid
+            try:
+                stygian = await gs.get_stygian_onslaught(uid)
+            except genshin.GeetestError as ex:
+                print(f"\33[31mERROR | Captcha triggered while fetching Stygian Onslaught data. Go to your Battle Chronicle and complete a captcha for the script to be able to notify you when Stygian Onslaught resets!\033[0m")
+                if os.getenv('tts') == 'True':
+                    engine.say("Stygian Onslaught reset data can't be collected! More information about the error is available in the console.")
+                    engine.runAndWait()
+                await toast_async("Stygian Onslaught Error", f"Stygian Onslaught reset data can't be collected!\nMore information about the error is available in the console.", icon=icon)
+                return
+
+            with open("cache.json", "r", encoding='utf-8') as cache_f:
+                cache = json.load(cache_f)
+                season = cache['stygian_season']
+                cache_f.close()
+
+            if season != stygian[0].season.id:
+                with open("cache.json", "w", encoding='utf-8') as cache_f:
+                    stygian_reset = True
+                    cache['stygian_season'] = stygian[0].season.id
+                    json.dump(cache, cache_f, indent=4)
+                    cache_f.close()
+                print(f"{strftime('%H:%M:%S', localtime())} | Stygian Onslaught has been reset")
+                if os.getenv('tts') == 'True':
+                    engine.say("Stygian Onslaught has been reset")
+                    engine.runAndWait()
+                await toast_async("Stygian Onslaught reset", f"Stygian Onslaught has been reset", icon=icon)
+
+        await asyncio.sleep(900)
+
 async def shop():
     last_day = -1
     icon = {
@@ -431,6 +499,10 @@ async def reminder():
         'src': f'file://{gn_path}/ico/Shop.ico',
         'placement': 'appLogoOverride'
     }
+    icon_st = {
+        'src': f'file://{gn_path}/ico/Stygian.ico',
+        'placement': 'appLogoOverride'
+    }
     while(True):
         name = "genshinimpact.exe" # "notepad++.exe"
         if name in (p.name().lower() for p in psutil.process_iter()):
@@ -446,9 +518,10 @@ async def reminder():
                     if genshin.Game.GENSHIN in account.game_biz:
                         uid = account.uid
                 notes = await gs.get_genshin_notes(uid)
-
+                notes_raw = await gs.get_genshin_notes(uid, return_raw_data=True)
+                
                 if (os.getenv("reminder_transformer")) == 'True':
-                    if notes.transformer_recovery_time == datetime.datetime.now().astimezone():
+                    if notes_raw["transformer"]["recovery_time"]["reached"] == True:
                         print(f"REMINDER {strftime('%H:%M:%S', localtime())} | Parametric Transformer cooldown has ended")
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Parametric Transformer cooldown has ended")
@@ -486,7 +559,7 @@ async def reminder():
                             engine.say("REMINDER Abyss has been reset")
                             engine.runAndWait()
                         await toast_async("Abyss reset", f"Abyss has been reset", icon=icon_a)
-                
+
                 if (os.getenv("reminder_theater")) == 'True':
                     if theater_reset:
                         print(f"REMINDER {strftime('%H:%M:%S', localtime())} | Imaginarium Theater has been reset")
@@ -494,7 +567,15 @@ async def reminder():
                             engine.say("REMINDER Imaginarium Theater has been reset")
                             engine.runAndWait()
                         await toast_async("Imaginarium Theater reset", f"Imaginarium Theater has been reset", icon=icon_it)
-                
+
+                if (os.getenv("reminder_stygian")) == 'True':
+                    if theater_reset:
+                        print(f"REMINDER {strftime('%H:%M:%S', localtime())} | Stygian Onslaught has been reset")
+                        if os.getenv('tts') == 'True':
+                            engine.say("REMINDER Stygian Onslaught has been reset")
+                            engine.runAndWait()
+                        await toast_async("Stygian Onslaught reset", f"Stygian Onslaught has been reset", icon=icon_st)
+
                 day = int(datetime.datetime.now(pytz.timezone(timezones[os.getenv("server")])).strftime('%d'))
                 if (os.getenv("reminder_shop")) == 'True':
                     if day == 1:
@@ -510,6 +591,7 @@ async def reminder():
         await asyncio.sleep(int(os.getenv("reminder_time")))
 
 if __name__ == '__main__':
+    clear_toast(app_id="Genshin Notifications")
     loop = asyncio.get_event_loop()
     print("-----------------------------------")
     if (os.getenv('resin_not')) == 'True':
@@ -533,11 +615,14 @@ if __name__ == '__main__':
     if (os.getenv('theater_not')) == 'True':
         task7 = asyncio.ensure_future(theater())
         print('Imaginarium Theater reset turned on')
+    if (os.getenv('stygian_not')) == 'True':
+        task8 = asyncio.ensure_future(stygian())
+        print('Stygian Onslaught reset turned on')
     if (os.getenv('shop_not')) == 'True':
-        task8 = asyncio.ensure_future(shop())
+        task9 = asyncio.ensure_future(shop())
         print('Shop reset turned on')
     if (os.getenv('reminder')) == 'True':
-        task9 = asyncio.ensure_future(reminder())
+        task10 = asyncio.ensure_future(reminder())
         print('Reminder turned on')
     print("-----------------------------------")
     loop.run_forever()
