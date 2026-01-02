@@ -49,6 +49,10 @@ python notifications.py
 
 ## Changelog
 
+### 02.01.2026
+
+- Fixed Stygian Onslaught reminders
+
 ### 31.12.2025
 
 - Added Stygian Onslaught reset notification

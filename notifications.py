@@ -479,6 +479,7 @@ async def reminder():
     game_on = False
     global abyss_reset
     global theater_reset
+    global stygian_reset
     icon_t = {
         'src': f'file://{gn_path}/ico/Transformer.ico',
         'placement': 'appLogoOverride'
@@ -569,7 +570,7 @@ async def reminder():
                         await toast_async("Imaginarium Theater reset", f"Imaginarium Theater has been reset", icon=icon_it)
 
                 if (os.getenv("reminder_stygian")) == 'True':
-                    if theater_reset:
+                    if stygian_reset:
                         print(f"REMINDER {strftime('%H:%M:%S', localtime())} | Stygian Onslaught has been reset")
                         if os.getenv('tts') == 'True':
                             engine.say("REMINDER Stygian Onslaught has been reset")
